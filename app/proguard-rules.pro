@@ -8,11 +8,9 @@
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
 # class:
--keepclassmembers class com.sawolabs.androidsdk.SawoWebSDKInterfaceKt {
-   @android.webkit.JavascriptInterface handleOnSuccessCallback
-}
--keep class com.sawolabs.androidsdk.SawoWebSDKInterface
--keepattributes JavascriptInterface
+#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
+#   public *;
+#}
 
 # Uncomment this to preserve the line number information for
 # debugging stack traces.
