@@ -56,6 +56,7 @@ class LoginActivity : AppCompatActivity() {
 
     private fun passPayloadToCallbackActivity(message: String) {
         val intent = Intent(this, Class.forName(callBackClassName)).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(LOGIN_SUCCESS_MESSAGE, message)
         }
         startActivity(intent)
