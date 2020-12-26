@@ -11,6 +11,8 @@
 2. Add this to your app level build.gradle dependencies block
 
    ```java
+   implementation "androidx.biometric:biometric:1.0.1"
+   implementation "com.google.code.gson:gson:2.8.6"
    implementation 'com.github.sawolabs:Android-SDK:0.1.2'
    ```
 
