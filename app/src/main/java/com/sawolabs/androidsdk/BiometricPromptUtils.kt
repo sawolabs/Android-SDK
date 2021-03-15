@@ -10,6 +10,7 @@ object BiometricPromptUtils {
     private const val TAG = "BiometricPromptUtils"
     fun createBiometricPrompt(
         activity: AppCompatActivity,
+        processCancel: () -> Unit,
         processSuccess: (BiometricPrompt.CryptoObject?) -> Unit
     ): BiometricPrompt {
         val executor = ContextCompat.getMainExecutor(activity)
@@ -19,6 +20,9 @@ object BiometricPromptUtils {
             override fun onAuthenticationError(errCode: Int, errString: CharSequence) {
                 super.onAuthenticationError(errCode, errString)
                 Log.d(TAG, "errCode is $errCode and errString is: $errString")
+                if ((errCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON) or (errCode == BiometricPrompt.ERROR_USER_CANCELED)) {
+                    processCancel()
+                }
             }
 
             override fun onAuthenticationFailed() {

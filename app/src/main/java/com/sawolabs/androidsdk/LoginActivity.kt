@@ -5,9 +5,9 @@ import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 
@@ -27,6 +27,7 @@ class LoginActivity : AppCompatActivity() {
     )
     private var readyToEncrypt: Boolean = false
     private val secretKeyName = "SAWO_BIOMETRIC_ENCRYPTION_KEY"
+    private var keyExistInStorage: Boolean = false
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,23 +36,29 @@ class LoginActivity : AppCompatActivity() {
         sawoWebSDKURL = intent.getStringExtra(SAWO_WEBSDK_URL)
         callBackClassName = intent.getStringExtra(CALLBACK_CLASS)
         cryptographyManager = CryptographyManager()
-        biometricPrompt = BiometricPromptUtils.createBiometricPrompt(this, ::processData)
+        biometricPrompt = BiometricPromptUtils.createBiometricPrompt(
+            this, ::processCancel, ::processData)
         promptInfo = BiometricPromptUtils.createPromptInfo(this)
         mWebView = findViewById(R.id.webview)
+        keyExistInStorage = cryptographyManager.isDataExistInSharedPrefs(
+            this, SHARED_PREF_FILENAME, Context.MODE_PRIVATE, SHARED_PREF_ENC_PAIR_KEY)
+        sawoWebSDKURL += "&keysExistInStorage=${keyExistInStorage}"
         mWebView.loadUrl(sawoWebSDKURL)
         mWebView.settings.javaScriptEnabled = true
         mWebView.settings.domStorageEnabled = true
         mWebView.settings.databaseEnabled = true
         mWebView.webViewClient = WebViewClient()
         mWebView.addJavascriptInterface(
-            SawoWebSDKInterface(::passPayloadToCallbackActivity, ::authenticateToEncrypt),
+            SawoWebSDKInterface(
+                ::passPayloadToCallbackActivity, ::authenticateToEncrypt, ::authenticateToDecrypt),
             "webSDKInterface"
         )
     }
 
-    override fun onPause() {
-        super.onPause()
-        Log.d("LoginActivity", "paused")
+    private fun processCancel() {
+        Toast.makeText(
+            this, R.string.prompt_cancel_toast, Toast.LENGTH_LONG).show()
+        finish()
     }
 
     private fun passPayloadToCallbackActivity(message: String) {
@@ -68,8 +75,10 @@ class LoginActivity : AppCompatActivity() {
         dataToEncrypt = message
         if (BiometricManager.from(applicationContext).canAuthenticate() == BiometricManager
                 .BIOMETRIC_SUCCESS) {
-            val cipher = cryptographyManager.getInitializedCipherForEncryption(secretKeyName)
-            biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
+            runOnUiThread(Runnable {
+                val cipher = cryptographyManager.getInitializedCipherForEncryption(secretKeyName)
+                biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
+            })
         }
     }
 
@@ -77,8 +86,10 @@ class LoginActivity : AppCompatActivity() {
         readyToEncrypt = false
         if (BiometricManager.from(applicationContext).canAuthenticate() == BiometricManager
                 .BIOMETRIC_SUCCESS && encryptedData != null) {
-            encryptedData?.let { encryptedData ->  val cipher = cryptographyManager.getInitializedCipherForDecryption(secretKeyName, encryptedData.initializationVector)
-                biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))}
+            runOnUiThread(Runnable {
+                encryptedData?.let { encryptedData ->  val cipher = cryptographyManager.getInitializedCipherForDecryption(secretKeyName, encryptedData.initializationVector)
+                    biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))}
+            })
         }
     }
 
@@ -96,7 +107,9 @@ class LoginActivity : AppCompatActivity() {
             if (encryptedData != null) {
                 encryptedData?.let { encryptedData ->
                     val data = cryptographyManager.decryptData(encryptedData.ciphertext, cryptoObject?.cipher!!)
-                    mWebView.evaluateJavascript("javascript: updateFromNative(\"${data}\")",null)
+                    runOnUiThread(Runnable { mWebView.evaluateJavascript(
+                        "(function() { window.dispatchEvent(new CustomEvent('keysFromAndroid', {'detail': \'${data}\'})); })();", null
+                    )})
                 }
             }
         }

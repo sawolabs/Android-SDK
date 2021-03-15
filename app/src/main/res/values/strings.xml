@@ -3,4 +3,5 @@
     <string name="login_button">Login</string>
     <string name="prompt_info_title">Please verify your fingerprint</string>
     <string name="prompt_info_cancel_text">Cancel</string>
+    <string name="prompt_cancel_toast">You must verify your fingerprint to login</string>
 </resources>

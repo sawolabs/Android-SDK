@@ -37,6 +37,7 @@ interface CryptographyManager {
         prefKey: String
     ): EncryptedData?
 
+    fun isDataExistInSharedPrefs(context: Context, filename: String, mode: Int, prefKey: String): Boolean
 }
 
 fun CryptographyManager(): CryptographyManager = CryptographyManagerImpl()
@@ -94,6 +95,16 @@ private class CryptographyManagerImpl : CryptographyManager {
     ): EncryptedData? {
         val json = context.getSharedPreferences(filename, mode).getString(prefKey, null)
         return  Gson().fromJson(json, EncryptedData::class.java)
+    }
+
+    override fun isDataExistInSharedPrefs(
+        context: Context,
+        filename: String,
+        mode: Int,
+        prefKey: String
+    ): Boolean {
+        val pref = context.getSharedPreferences(filename, mode).getString(prefKey, null)
+        return pref != null
     }
 
     private fun getCipher(): Cipher {
