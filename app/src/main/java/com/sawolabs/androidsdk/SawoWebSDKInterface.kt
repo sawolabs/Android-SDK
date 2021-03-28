@@ -5,7 +5,8 @@ import android.webkit.JavascriptInterface
 class SawoWebSDKInterface(
     private val passPayload: (String) -> Unit,
     private val authenticateToEncrypt: (String) -> Unit,
-    private val authenticateToDecrypt: () -> Unit
+    private val authenticateToDecrypt: () -> Unit,
+    private val deviceID: String
 ) {
     @JavascriptInterface
     fun handleOnSuccessCallback(message: String) {
@@ -20,5 +21,10 @@ class SawoWebSDKInterface(
     @JavascriptInterface
     fun getKeys() {
         authenticateToDecrypt()
+    }
+
+    @JavascriptInterface
+    fun getPlayerID(): String {
+        return deviceID
     }
 }
