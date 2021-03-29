@@ -8,21 +8,31 @@
    maven { url 'https://jitpack.io' }
    ```
 
-2. Add this to your app level build.gradle dependencies block
+2. Add this to your app level build.gradle android block
+    ```java
+       compileOptions {
+            sourceCompatibility JavaVersion.VERSION_1_8
+            targetCompatibility JavaVersion.VERSION_1_8
+        }
+    
+        kotlinOptions {
+            jvmTarget = '1.8'
+        }
+    ```
+
+3. Add this to your app level build.gradle dependencies block
 
    ```java
-   implementation "androidx.biometric:biometric:1.0.1"
-   implementation "com.google.code.gson:gson:2.8.6"
-   implementation 'com.github.sawolabs:Android-SDK:0.1.3'
+   implementation 'com.github.sawolabs:Android-SDK:0.1.4'
    ```
 
-3. Sync your project
+4. Sync your project
 
-4. Go to [https://dev.sawolabs.com](https://dev.sawolabs.com) and create a project and copy the api key and api key secret 
+5. Go to [https://dev.sawolabs.com](https://dev.sawolabs.com) and create a project and copy the api key and api key secret 
 
-5. Create an Activity in Android Studio to get login success response for this example lets assume it is CallbackActivity
+6. Create an Activity in Android Studio to get login success response for this example lets assume it is CallbackActivity
 
-6. In your MainActivity add a button to login and add following code to its onclick handle
+7. In your MainActivity add a button to login and add following code to its onclick handle
 
    Java
 
@@ -62,7 +72,7 @@
 
    
 
-7. Get the response payload in the CallbackActivity
+8. Get the response payload in the CallbackActivity
 
    Java
 
@@ -84,7 +94,7 @@
    // continue with your implementation
    ```
 
-8. Recommended: Verify the payload sent by sdk from your backend
+9. Recommended: Verify the payload sent by sdk from your backend
 
    Python example:
 
