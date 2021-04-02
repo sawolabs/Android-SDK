@@ -151,6 +151,12 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
 
     private fun processData(cryptoObject: BiometricPrompt.CryptoObject?) {
         if (readyToEncrypt) {
+            runOnUiThread(Runnable {
+                mWebView.evaluateJavascript(
+                    "(function() { window.dispatchEvent(new CustomEvent('keysFromAndroid', {'detail': \'${dataToEncrypt}\'})); })();",
+                    null
+                )
+            })
             val encryptedData =
                 cryptographyManager.encryptData(dataToEncrypt, cryptoObject?.cipher!!)
             cryptographyManager.saveEncryptedDataToSharedPrefs(
