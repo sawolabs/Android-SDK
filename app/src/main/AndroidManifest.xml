@@ -3,6 +3,7 @@
     package="com.sawolabs.androidsdk">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
 
     <application
         android:name=".ApplicationClass"
@@ -23,6 +24,9 @@
         <meta-data
             android:name="com.onesignal.NotificationOpened.DEFAULT"
             android:value="DISABLE" />
+        <meta-data android:name="io.sentry.dsn" android:value="https://70096d4be16444fd86b99b70de65d8d7@o502424.ingest.sentry.io/5741611" />
+        <meta-data android:name="io.sentry.traces.sample-rate" android:value="1.0" />
+
     </application>
 
 </manifest>
