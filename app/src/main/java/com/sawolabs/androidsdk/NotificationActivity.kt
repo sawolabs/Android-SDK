@@ -11,6 +11,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricPrompt
 import com.google.gson.Gson
+import io.sentry.Breadcrumb
+import io.sentry.Sentry
+import io.sentry.SentryLevel
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
@@ -93,6 +96,17 @@ class NotificationActivity : AppCompatActivity() {
             sharedPref.getString(SHARED_PREF_DEVICE_ID_KEY, null).toString(),
             if (userTrustedDevice) "allowed" else "denied"
         )
+        // SENTRY Tag and Breadcrumb
+        val activity = this.javaClass.simpleName
+        Sentry.setTag("activity", activity)
+
+
+        val breadcrumb = Breadcrumb()
+        breadcrumb.message = "Retrofit call for secondary trusted device"
+        breadcrumb.level = SentryLevel.INFO
+        breadcrumb.setData("Activity Name", activity)
+        Sentry.addBreadcrumb(breadcrumb)
+
         val call = secondaryTrustedDeviceApi.sendTrustedResponse(trustedDevice)
         call.enqueue(object : Callback<Void> {
             override fun onResponse(call: Call<Void>, response: Response<Void>) {
@@ -120,7 +134,9 @@ class NotificationActivity : AppCompatActivity() {
                             )}"
                         )
                     } catch (e: Exception) {
+                        Sentry.captureException(e)
                         Log.d(
+
                             TAG,
                             "SecondaryTrustedDeviceApi: Error in parsing server error response ${e.message}"
                         )

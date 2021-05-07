@@ -19,6 +19,9 @@ import androidx.biometric.BiometricPrompt
 import com.onesignal.OSSubscriptionObserver
 import com.onesignal.OSSubscriptionStateChanges
 import com.onesignal.OneSignal
+import io.sentry.Breadcrumb
+import io.sentry.Sentry
+import io.sentry.SentryLevel
 import okhttp3.OkHttpClient
 import org.json.JSONObject
 import retrofit2.Call
@@ -232,6 +235,19 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
             )
             val call = registerDeviceApi.sendDeviceData(deviceData)
 
+            // SENTRY Tag and Breadcrumb
+            val activity = this.javaClass.simpleName
+            Sentry.setTag("activity", activity)
+
+
+            val breadcrumb = Breadcrumb()
+            breadcrumb.message = "Retrofit call to register device information"
+            breadcrumb.level = SentryLevel.INFO
+            breadcrumb.setData("Activity Name", activity)
+            Sentry.addBreadcrumb(breadcrumb)
+
+
+
             call.enqueue(object : Callback<Void> {
                 override fun onResponse(call: Call<Void>, response: Response<Void>) {
                     if (response.isSuccessful) {
@@ -243,6 +259,7 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
                                 "RegisterDeviceApi: ${JSONObject(response.errorBody()!!.string())}"
                             )
                         } catch (e: Exception) {
+                            Sentry.captureException(e)
                             Log.d(
                                 TAG,
                                 "RegisterDeviceApi: Error in parsing server error response ${e.message}"
@@ -262,4 +279,5 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
         Log.d(TAG, "OSSubscriptionStateChanged, calling registerDevice")
         registerDevice()
     }
+
 }
