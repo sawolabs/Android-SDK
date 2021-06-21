@@ -1,4 +1,4 @@
-package com.sawolabs.androidsdk
+package com.sawolabs.androidsdk1
 
 data class PushNotificationAdditionalData (
     val trusted_id: String,
