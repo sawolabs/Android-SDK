@@ -1,4 +1,4 @@
-package com.sawolabs.androidsdk1
+package com.sawolabs.androidsdk
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

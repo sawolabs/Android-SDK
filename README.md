@@ -37,7 +37,7 @@
    Java
 
    ```java
-   import com.sawolabs.androidsdk1.Sawo;
+   import com.sawolabs.androidsdk.Sawo;
    
    public void onClickLogin(View view) {
        new Sawo(
@@ -77,7 +77,7 @@
    Java
 
    ```java
-   import com.sawolabs.androidsdk1.ConstantsKt;
+   import com.sawolabs.androidsdk.ConstantsKt;
    
    Intent intent = getIntent();
    String message = intent.getStringExtra(ConstantsKt.LOGIN_SUCCESS_MESSAGE);

@@ -1,10 +1,8 @@
-package com.sawolabs.androidsdk1
+package com.sawolabs.androidsdk
 
 import android.annotation.SuppressLint
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -58,12 +56,7 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
-
-
-        broadcast1()
-
-
-            OneSignal.addSubscriptionObserver(this)
+        OneSignal.addSubscriptionObserver(this)
         registerDevice()
         sawoWebSDKURL = intent.getStringExtra(SAWO_WEBSDK_URL)
         callBackClassName = intent.getStringExtra(CALLBACK_CLASS)
@@ -287,20 +280,4 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
         registerDevice()
     }
 
-    private fun broadcast1() {
-
-        val i = Intent("com.pkg.perform.Ruby")
-        val pack: PackageManager = getPackageManager()
-        val resolveinfo = pack.queryBroadcastReceivers(i, 0)
-        for (r in resolveinfo){
-            Log.i("ak", r.activityInfo.packageName)
-            val comp = ComponentName(r.activityInfo.packageName, r.activityInfo.name)
-            i.putExtra("request", "akul")
-            i.component = comp
-            sendBroadcast(i)
-            Toast.makeText(this, comp.packageName, Toast.LENGTH_LONG).show()
-
-
-        }
-    }
 }

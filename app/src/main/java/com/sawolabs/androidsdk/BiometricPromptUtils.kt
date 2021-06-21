@@ -1,4 +1,4 @@
-package com.sawolabs.androidsdk1
+package com.sawolabs.androidsdk
 
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity

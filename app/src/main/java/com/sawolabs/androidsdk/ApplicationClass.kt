@@ -1,4 +1,4 @@
-package com.sawolabs.androidsdk1
+package com.sawolabs.androidsdk
 
 import android.app.Application
 import android.content.Intent
