@@ -62,7 +62,7 @@
            Sawo(
                this,
                "", // your api key
-               "" // your api key secret
+                 "" // your api key secret
            ).login(
                "email", // can be one of 'email' or 'phone_number_sms'
                CallbackActivity::class.java.name // Callback class name
