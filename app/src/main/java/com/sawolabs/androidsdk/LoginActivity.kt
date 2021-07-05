@@ -3,6 +3,7 @@ package com.sawolabs.androidsdk
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -56,6 +57,12 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
+        val ConnectionManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val networkInfo = ConnectionManager.activeNetworkInfo
+        if (networkInfo != null && networkInfo.isConnected == true) {
+         } else {
+            Toast.makeText(this, "Network Not Available", Toast.LENGTH_LONG).show()
+        }
         OneSignal.addSubscriptionObserver(this)
         registerDevice()
         sawoWebSDKURL = intent.getStringExtra(SAWO_WEBSDK_URL)
