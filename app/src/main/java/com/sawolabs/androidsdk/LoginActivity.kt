@@ -57,12 +57,7 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
-        val ConnectionManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val networkInfo = ConnectionManager.activeNetworkInfo
-        if (networkInfo != null && networkInfo.isConnected == true) {
-         } else {
-            Toast.makeText(this, "Network Not Available", Toast.LENGTH_LONG).show()
-        }
+
         OneSignal.addSubscriptionObserver(this)
         registerDevice()
         sawoWebSDKURL = intent.getStringExtra(SAWO_WEBSDK_URL)
@@ -80,6 +75,13 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
         canStoreKeyInStorage =
             BiometricManager.from(applicationContext).canAuthenticate() == BiometricManager
                 .BIOMETRIC_SUCCESS
+        val ConnectionManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val networkInfo = ConnectionManager.activeNetworkInfo
+        if (networkInfo != null && networkInfo.isConnected == true) {
+        } else {
+            Toast.makeText(this, "Internet connection unavailable", Toast.LENGTH_LONG).show()
+            mWebView.destroy()
+        }
         sawoWebSDKURL += "&keysExistInStorage=${keyExistInStorage}&canStoreKeyInStorage=${canStoreKeyInStorage}"
         mWebView.settings.javaScriptEnabled = true
         mWebView.settings.domStorageEnabled = true
