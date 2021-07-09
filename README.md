@@ -23,7 +23,7 @@
 3. Add this to your app level build.gradle dependencies block
 
    ```java
-	   implementation 'com.github.sawolabs:Android-SDK:0.1.7'
+	   implementation 'com.github.sawolabs:Android-SDK:0.1.8'
    ```
 
 4. Sync your project
