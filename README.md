@@ -96,28 +96,33 @@
 
 9. Recommended: Verify the payload sent by sdk from your backend
    
-   We have created a POST request method with the endpoint: https://api.sawolabs.com/api/v1/userverify/
-   
+   We have created a POST request method with the endpoint: 
+   ```
+   https://api.sawolabs.com/api/v1/userverify/
+   ```
    The body of this POST request would have two key-value pairs. The sample is shown below:
-
+	```
 	{
 	   "user_id" : "a0aca1a0-7460-4e8e-8e46-3baf2c92423d",
 	   "verification_token" : "ADdHrvkgi407qNfnAyrIVqokm3OWdKUCdj8y"
 	}
-
+	```
 	
     Once the user is verified in our server and if the user is valid it would return the following response with response 200:
 
+	```
 	{
 	   "user_valid": true
 	}
-
+ 	```
    if the user is not valid it would return  the following response with response 400:
-
+	```
 	{
 	   "user_valid": true
 	}
+	```
 
    if the user is not found it would return  the following response with response 404:
-
+	```
 	"User not Found"
+	```
