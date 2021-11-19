@@ -95,23 +95,29 @@
    ```
 
 9. Recommended: Verify the payload sent by sdk from your backend
-
-   Python example:
-
-   ```python
-   import requests
    
-   data = {
-       'user_id': payload_sent_from_sdk['user_id']
-   }
-   res = requests.post('https://api.sawolabs.com/api/v1/userverify/', data=data)
-   # Match the verification token in response with sdk payload
-   if res.status_code == 200:
-       response_data = res.json()
-       if response_data['verification_token'] \
-                   == payload_sent_from_sdk['verification_token']:
-               # continue with your implementation for example add the user to your db
-   ```
-
+   We have created a POST request method with the endpoint: https://api.sawolabs.com/api/v1/userverify/
    
+   The body of this POST request would have two key-value pairs. The sample is shown below:
 
+	{
+	   "user_id" : "a0aca1a0-7460-4e8e-8e46-3baf2c92423d",
+	   "verification_token" : "ADdHrvkgi407qNfnAyrIVqokm3OWdKUCdj8y"
+	}
+
+	
+    Once the user is verified in our server and if the user is valid it would return the following response with response 200:
+
+	{
+	   "user_valid": true
+	}
+
+   if the user is not valid it would return  the following response with response 400:
+
+	{
+	   "user_valid": true
+	}
+
+   if the user is not found it would return  the following response with response 404:
+
+	"User not Found"
