@@ -1,7 +1,6 @@
 package com.sawolabs.androidsdk
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -129,9 +128,11 @@ class NotificationActivity : AppCompatActivity() {
                     try {
                         Log.d(
                             TAG,
-                            "SecondaryTrustedDeviceApi: Server responded with error ${JSONObject(
-                                response.errorBody()!!.string()
-                            )}"
+                            "SecondaryTrustedDeviceApi: Server responded with error ${
+                                JSONObject(
+                                    response.errorBody()!!.string()
+                                )
+                            }"
                         )
                     } catch (e: Exception) {
                         Sentry.captureException(e)

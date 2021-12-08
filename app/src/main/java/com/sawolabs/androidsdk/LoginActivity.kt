@@ -4,9 +4,9 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.webkit.WebResourceRequest
@@ -16,19 +16,24 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.biometric.BiometricPrompt
+import androidx.lifecycle.lifecycleScope
 import com.onesignal.OSSubscriptionObserver
 import com.onesignal.OSSubscriptionStateChanges
 import com.onesignal.OneSignal
 import io.sentry.Breadcrumb
 import io.sentry.Sentry
 import io.sentry.SentryLevel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.util.concurrent.TimeUnit
+
 
 private const val TAG = "LoginActivity"
 
@@ -53,6 +58,7 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
     private var keyExistInStorage: Boolean = false
     private var canStoreKeyInStorage: Boolean = false
 
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,8 +66,8 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
 
         OneSignal.addSubscriptionObserver(this)
         registerDevice()
-        sawoWebSDKURL = intent.getStringExtra(SAWO_WEBSDK_URL)
-        callBackClassName = intent.getStringExtra(CALLBACK_CLASS)
+        sawoWebSDKURL = intent.getStringExtra(SAWO_WEBSDK_URL).toString()
+        callBackClassName = intent.getStringExtra(CALLBACK_CLASS).toString()
         cryptographyManager = CryptographyManager()
         biometricPrompt = BiometricPromptUtils.createBiometricPrompt(
             this, ::processCancel, ::processData
@@ -73,51 +79,80 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
             this, SHARED_PREF_FILENAME, Context.MODE_PRIVATE, SHARED_PREF_ENC_PAIR_KEY
         )
         canStoreKeyInStorage =
-            BiometricManager.from(applicationContext).canAuthenticate() == BiometricManager
+            BiometricManager.from(applicationContext)
+                .canAuthenticate(BIOMETRIC_STRONG) == BiometricManager
                 .BIOMETRIC_SUCCESS
-        val ConnectionManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val networkInfo = ConnectionManager.activeNetworkInfo
-        if (networkInfo != null && networkInfo.isConnected == true) {
-        } else {
+
+        if (!isOnline(this)) {
             Toast.makeText(this, "Internet connection unavailable", Toast.LENGTH_LONG).show()
             mWebView.destroy()
         }
         sawoWebSDKURL += "&keysExistInStorage=${keyExistInStorage}&canStoreKeyInStorage=${canStoreKeyInStorage}"
-        mWebView.settings.javaScriptEnabled = true
-        mWebView.settings.domStorageEnabled = true
-        mWebView.settings.databaseEnabled = true
-        mWebView.webViewClient = object : WebViewClient() {
-            override fun shouldOverrideUrlLoading(
-                view: WebView?,
-                request: WebResourceRequest?
-            ): Boolean {
-                view?.loadUrl(request?.url.toString())
-                return super.shouldOverrideUrlLoading(view, request)
-            }
+        mWebView.apply {
+            this.settings.javaScriptEnabled = true
+            this.settings.domStorageEnabled = true
+            this.settings.databaseEnabled = true
+            this.webViewClient = object : WebViewClient() {
+                override fun shouldOverrideUrlLoading(
+                    view: WebView?,
+                    request: WebResourceRequest?
+                ): Boolean {
+                    view?.loadUrl(request?.url.toString())
+                    return super.shouldOverrideUrlLoading(view, request)
+                }
 
-            override fun onPageFinished(view: WebView?, url: String?) {
-                super.onPageFinished(view, url)
-                mProgressBar.visibility = View.GONE
-                mWebView.visibility = View.VISIBLE
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    mProgressBar.visibility = View.GONE
+                    mWebView.visibility = View.VISIBLE
+                }
             }
         }
-        Handler().postDelayed(
-            Runnable {
-                val sharedPref = getSharedPreferences(SHARED_PREF_FILENAME, Context.MODE_PRIVATE)
-                mWebView.addJavascriptInterface(
-                    SawoWebSDKInterface(
-                        ::passPayloadToCallbackActivity,
-                        ::authenticateToEncrypt,
-                        ::authenticateToDecrypt,
-                        sharedPref.getString(SHARED_PREF_DEVICE_ID_KEY, null).toString()
-                    ),
-                    "webSDKInterface"
-                )
-                mWebView.loadUrl(sawoWebSDKURL)
-            },
-            2000
-        )
+
+        lifecycleScope.launch {
+
+            val sharedPref = getSharedPreferences(SHARED_PREF_FILENAME, Context.MODE_PRIVATE)
+            mWebView.addJavascriptInterface(
+                SawoWebSDKInterface(
+                    ::passPayloadToCallbackActivity,
+                    ::authenticateToEncrypt,
+                    ::authenticateToDecrypt,
+                    sharedPref.getString(SHARED_PREF_DEVICE_ID_KEY, null).toString()
+                ),
+                "webSDKInterface"
+            )
+
+            delay(2000L)
+            mWebView.loadUrl(sawoWebSDKURL)
+        }
+
     }
+
+    private fun isOnline(context: Context): Boolean {
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val capabilities =
+            connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+        if (capabilities != null) {
+            if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                Log.i("Internet", "NetworkCapabilities.TRANSPORT_CELLULAR")
+                return true
+            } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                Log.i("Internet", "NetworkCapabilities.TRANSPORT_WIFI")
+                return true
+            } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
+                Log.i("Internet", "NetworkCapabilities.TRANSPORT_ETHERNET")
+                return true
+            }
+        }
+        return false
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mWebView.destroy()
+    }
+
 
     private fun processCancel() {
         Toast.makeText(
@@ -260,7 +295,10 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
             call.enqueue(object : Callback<Void> {
                 override fun onResponse(call: Call<Void>, response: Response<Void>) {
                     if (response.isSuccessful) {
-                        Log.d(TAG, "RegisterDeviceApi: Successful")
+                        Log.d(
+                            TAG,
+                            "RegisterDeviceApi: Successful"
+                        )
                     } else {
                         try {
                             Log.d(

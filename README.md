@@ -26,6 +26,12 @@
 	   implementation 'com.github.sawolabs:Android-SDK:0.1.8'
    ```
 
+   Add this to your app level build.gradle defaultConfig block
+
+      ```java
+   	   minSdkVersion 24
+      ```
+
 4. Sync your project
 
 5. Go to [https://dev.sawolabs.com](https://dev.sawolabs.com) and create a project and copy the api key and api key secret 
