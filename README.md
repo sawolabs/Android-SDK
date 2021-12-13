@@ -23,7 +23,7 @@
 3. Add this to your app level build.gradle dependencies block
 
    ```java
-	   implementation 'com.github.sawolabs:Android-SDK:0.1.8'
+	   implementation 'com.github.sawolabs:Android-SDK:0.1.9'
    ```
 
    Add this to your app level build.gradle defaultConfig block
