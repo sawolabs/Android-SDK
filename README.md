@@ -23,7 +23,7 @@
 3. Add this to your app level build.gradle dependencies block
 
    ```java
-	   implementation 'com.github.sawolabs:Android-SDK:0.1.9'
+	   implementation 'com.github.sawolabs:Android-SDK:0.2.0'
    ```
 
    Add this to your app level build.gradle defaultConfig block
@@ -124,7 +124,7 @@
    if the user is not valid it would return  the following response with response 400:
 	```
 	{
-	   "user_valid": true
+	   "user_valid": false
 	}
 	```
 
