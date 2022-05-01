@@ -1,4 +1,4 @@
-package com.sawolabs.androidsdk
+package com.sawolabs.androidsdk.ui.notification
 
 import android.content.Context
 import android.os.Bundle
@@ -9,20 +9,29 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricPrompt
+import androidx.lifecycle.ViewModelProvider
 import com.google.gson.Gson
+import com.sawolabs.androidsdk.R
 import com.sawolabs.androidsdk.databinding.ActivityNotificationBinding
+import com.sawolabs.androidsdk.model.PushNotificationAdditionalData
+import com.sawolabs.androidsdk.model.TrustedDevice
+import com.sawolabs.androidsdk.repository.Repository
+import com.sawolabs.androidsdk.ui.notification.viewmodel.NotificationViewModel
+import com.sawolabs.androidsdk.ui.notification.viewmodel.NotificationViewModelFactory
+import com.sawolabs.androidsdk.util.BiometricPromptUtils
+import com.sawolabs.androidsdk.util.Constants.Companion.SHARED_PREF_DEVICE_ID_KEY
+import com.sawolabs.androidsdk.util.Constants.Companion.SHARED_PREF_FILENAME
+import com.sawolabs.androidsdk.util.Constants.Companion.TRUSTED_DEVICE_NOTIFICATION_ADDITIONAL_DATA
 import io.sentry.Breadcrumb
 import io.sentry.Sentry
 import io.sentry.SentryLevel
 import org.json.JSONObject
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
 private const val TAG = "NotificationActivity"
 
 class NotificationActivity : AppCompatActivity() {
     private lateinit var binding: ActivityNotificationBinding
+    private lateinit var viewModel: NotificationViewModel
     private lateinit var biometricPrompt: BiometricPrompt
     private lateinit var promptInfo: BiometricPrompt.PromptInfo
     private lateinit var yesBtn: Button
@@ -35,6 +44,11 @@ class NotificationActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityNotificationBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+
+        val repository = Repository()
+        val viewModelFactory = NotificationViewModelFactory(repository)
+        viewModel = ViewModelProvider(this, viewModelFactory)[NotificationViewModel::class.java]
 
         additionalData = Gson().fromJson(
             intent.getStringExtra(TRUSTED_DEVICE_NOTIFICATION_ADDITIONAL_DATA),
@@ -89,9 +103,8 @@ class NotificationActivity : AppCompatActivity() {
 
     private fun callApiSecondaryDevice(userTrustedDevice: Boolean) {
         val sharedPref = getSharedPreferences(SHARED_PREF_FILENAME, Context.MODE_PRIVATE)
-        val builder = HttpApiUtils.getRetrofitBuilder()
-        val retrofit = builder.build()
-        val secondaryTrustedDeviceApi = retrofit.create(SecondaryTrustedDeviceApi::class.java)
+
+
         val trustedDevice = TrustedDevice(
             additionalData.trusted_id,
             additionalData.secondary_id,
@@ -109,49 +122,49 @@ class NotificationActivity : AppCompatActivity() {
         breadcrumb.setData("Activity Name", activity)
         Sentry.addBreadcrumb(breadcrumb)
 
-        val call = secondaryTrustedDeviceApi.sendTrustedResponse(trustedDevice)
-        call.enqueue(object : Callback<Void> {
-            override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                if (response.isSuccessful) {
-                    if (userTrustedDevice) {
-                        Toast.makeText(
-                            this@NotificationActivity,
-                            getString(R.string.trusted_device_notification_activity_device_authorized),
-                            Toast.LENGTH_LONG
-                        ).show()
+        viewModel.sendTrustedResponse(trustedDevice = trustedDevice)
+        viewModel.trustedDeviceResponse.observe(this) { response ->
 
-                    } else if (userTrustedDevice) {
-                        Toast.makeText(
-                            this@NotificationActivity,
-                            getString(R.string.trusted_device_notification_activity_device_rejected),
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                } else {
-                    try {
-                        Log.d(
-                            TAG,
-                            "SecondaryTrustedDeviceApi: Server responded with error ${
-                                JSONObject(
-                                    response.errorBody()!!.string()
-                                )
-                            }"
-                        )
-                    } catch (e: Exception) {
-                        Sentry.captureException(e)
-                        Log.d(
+            if (response.isSuccessful) {
+                if (userTrustedDevice) {
+                    Toast.makeText(
+                        this@NotificationActivity,
+                        getString(R.string.trusted_device_notification_activity_device_authorized),
+                        Toast.LENGTH_LONG
+                    ).show()
 
-                            TAG,
-                            "SecondaryTrustedDeviceApi: Error in parsing server error response ${e.message}"
-                        )
-                    }
+                } else if (userTrustedDevice) {
+                    Toast.makeText(
+                        this@NotificationActivity,
+                        getString(R.string.trusted_device_notification_activity_device_rejected),
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
+            } else {
+                try {
+                    Log.d(
+                        TAG,
+                        "SecondaryTrustedDeviceApi: Server responded with error ${
+                            JSONObject(
+                                response.errorBody()!!.string()
+                            )
+                        }"
+                    )
+                } catch (e: Exception) {
+                    Sentry.captureException(e)
+                    Log.d(
 
+                        TAG,
+                        "SecondaryTrustedDeviceApi: Error in parsing server error response ${e.message}"
+                    )
+                }
             }
 
-            override fun onFailure(call: Call<Void>, t: Throwable) {
-                Log.d(TAG, "SecondaryTrustedDeviceApi: Error in requesting API ${t.message}")
-            }
-        })
+        }
+
+
     }
+
+
 }
+

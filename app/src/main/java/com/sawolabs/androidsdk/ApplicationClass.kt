@@ -3,6 +3,8 @@ package com.sawolabs.androidsdk
 import android.app.Application
 import android.content.Intent
 import com.onesignal.OneSignal
+import com.sawolabs.androidsdk.ui.notification.NotificationActivity
+import com.sawolabs.androidsdk.util.Constants.Companion.TRUSTED_DEVICE_NOTIFICATION_ADDITIONAL_DATA
 
 //change the app id accordingly
 const val ONESIGNAL_APP_ID = "25f5431e-5523-4a96-8c6f-d6957424b19d"

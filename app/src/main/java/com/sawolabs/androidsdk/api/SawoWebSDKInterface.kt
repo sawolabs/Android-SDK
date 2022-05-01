@@ -1,4 +1,4 @@
-package com.sawolabs.androidsdk
+package com.sawolabs.androidsdk.api
 
 import android.webkit.JavascriptInterface
 

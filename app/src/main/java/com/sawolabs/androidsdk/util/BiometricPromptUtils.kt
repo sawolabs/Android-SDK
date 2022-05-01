@@ -1,9 +1,10 @@
-package com.sawolabs.androidsdk
+package com.sawolabs.androidsdk.util
 
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
+import com.sawolabs.androidsdk.R
 
 
 object BiometricPromptUtils {

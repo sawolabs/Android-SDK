@@ -1,11 +1,9 @@
-package com.sawolabs.androidsdk
+package com.sawolabs.androidsdk.ui.login
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
-import android.os.Build
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -18,22 +16,29 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.biometric.BiometricPrompt
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.onesignal.OSSubscriptionObserver
 import com.onesignal.OSSubscriptionStateChanges
 import com.onesignal.OneSignal
+import com.sawolabs.androidsdk.R
+import com.sawolabs.androidsdk.api.SawoWebSDKInterface
 import com.sawolabs.androidsdk.databinding.ActivityLoginBinding
-import io.sentry.Breadcrumb
-import io.sentry.Sentry
-import io.sentry.SentryLevel
+import com.sawolabs.androidsdk.repository.Repository
+import com.sawolabs.androidsdk.ui.login.viewmodel.LoginViewModel
+import com.sawolabs.androidsdk.ui.login.viewmodel.LoginViewModelFactory
+import com.sawolabs.androidsdk.util.BiometricPromptUtils
+import com.sawolabs.androidsdk.util.CheckConnectionStatus.isOnline
+import com.sawolabs.androidsdk.util.Constants.Companion.CALLBACK_CLASS
+import com.sawolabs.androidsdk.util.Constants.Companion.LOGIN_SUCCESS_MESSAGE
+import com.sawolabs.androidsdk.util.Constants.Companion.SAWO_WEBSDK_URL
+import com.sawolabs.androidsdk.util.Constants.Companion.SHARED_PREF_DEVICE_ID_KEY
+import com.sawolabs.androidsdk.util.Constants.Companion.SHARED_PREF_ENC_PAIR_KEY
+import com.sawolabs.androidsdk.util.Constants.Companion.SHARED_PREF_FILENAME
+import com.sawolabs.androidsdk.util.CryptographyManager
+import com.sawolabs.androidsdk.util.RegisterDevice.registerDevice
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
-import org.json.JSONObject
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import java.util.concurrent.TimeUnit
 
 
 private const val TAG = "LoginActivity"
@@ -41,6 +46,8 @@ private const val TAG = "LoginActivity"
 class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
     private lateinit var binding: ActivityLoginBinding
     private lateinit var biometricPrompt: BiometricPrompt
+    private lateinit var viewModel: LoginViewModel
+    private lateinit var sharedPref: SharedPreferences
     private lateinit var promptInfo: BiometricPrompt.PromptInfo
     private lateinit var cryptographyManager: CryptographyManager
     private lateinit var mWebView: WebView
@@ -67,8 +74,9 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        sharedPref = getSharedPreferences(SHARED_PREF_FILENAME, Context.MODE_PRIVATE)
         OneSignal.addSubscriptionObserver(this)
-        registerDevice()
+        val deviceData = registerDevice(sharedPref)
         sawoWebSDKURL = intent.getStringExtra(SAWO_WEBSDK_URL).toString()
         callBackClassName = intent.getStringExtra(CALLBACK_CLASS).toString()
         cryptographyManager = CryptographyManager()
@@ -112,9 +120,18 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
             }
         }
 
-        lifecycleScope.launch {
+        val repository = Repository()
+        val viewModelFactory = LoginViewModelFactory(repository)
+        viewModel = ViewModelProvider(this, viewModelFactory)[LoginViewModel::class.java]
 
-            val sharedPref = getSharedPreferences(SHARED_PREF_FILENAME, Context.MODE_PRIVATE)
+        viewModel.registerDevice(deviceData)
+        viewModel.registerDeviceResponse.observe(this) { deviceResponse ->
+            if (deviceResponse.isSuccessful) {
+                Log.d("Registered", deviceResponse.message())
+            }
+        }
+
+        lifecycleScope.launch {
             mWebView.addJavascriptInterface(
                 SawoWebSDKInterface(
                     ::passPayloadToCallbackActivity,
@@ -125,35 +142,12 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
                 "webSDKInterface"
             )
 
-            delay(2000L)
+            delay(1000L)
             mWebView.loadUrl(sawoWebSDKURL)
         }
 
     }
 
-    private fun isOnline(context: Context): Boolean {
-        val connectivityManager =
-            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val capabilities =
-            connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
-        if (capabilities != null) {
-            when {
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
-                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_CELLULAR")
-                    return true
-                }
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> {
-                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_WIFI")
-                    return true
-                }
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
-                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_ETHERNET")
-                    return true
-                }
-            }
-        }
-        return false
-    }
 
     override fun onDestroy() {
         super.onDestroy()
@@ -238,100 +232,9 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
         }
     }
 
-    private fun getDeviceName(): String? {
-        return "${capitalize(Build.MANUFACTURER)} ${capitalize(Build.MODEL)}"
-    }
-
-    private fun capitalize(s: String?): String {
-        if (s == null || s.isEmpty()) {
-            return ""
-        }
-        return if (Character.isUpperCase(s[0])) {
-            s
-        } else {
-            Character.toUpperCase(s[0]).toString() + s.substring(1)
-        }
-    }
-
-    private fun registerDevice() {
-        val device = OneSignal.getDeviceState()
-
-        val deviceID = device!!.userId
-        val deviceToken = device.pushToken
-
-        if ((deviceID != null) and (deviceToken != null)) {
-            if (deviceID != null) {
-                getSharedPreferences(SHARED_PREF_FILENAME, Context.MODE_PRIVATE).edit().putString(
-                    SHARED_PREF_DEVICE_ID_KEY, deviceID
-                ).apply()
-            }
-
-            val httpClient = OkHttpClient.Builder()
-                .callTimeout(2, TimeUnit.MINUTES)
-                .connectTimeout(30, TimeUnit.SECONDS)
-
-            val builder = HttpApiUtils.getRetrofitBuilder()
-
-            builder.client(httpClient.build())
-            val retrofit = builder.build()
-
-            val registerDeviceApi = retrofit.create(RegisterDeviceApi::class.java)
-            val deviceData = Device(
-                deviceToken,
-                deviceID,
-                Build.MANUFACTURER.toString(),
-                Build.MODEL.toString(),
-                getDeviceName().toString(),
-                "android"
-            )
-            val call = registerDeviceApi.sendDeviceData(deviceData)
-
-            // SENTRY Tag and Breadcrumb
-            val activity = this.javaClass.simpleName
-            Sentry.setTag("activity", activity)
-
-
-            val breadcrumb = Breadcrumb()
-            breadcrumb.message = "Retrofit call to register device information"
-            breadcrumb.level = SentryLevel.INFO
-            breadcrumb.setData("Activity Name", activity)
-            Sentry.addBreadcrumb(breadcrumb)
-
-
-
-            call.enqueue(object : Callback<Void> {
-                override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                    if (response.isSuccessful) {
-                        Log.d(
-                            TAG,
-                            "RegisterDeviceApi: Successful"
-                        )
-                    } else {
-                        try {
-                            Log.d(
-                                TAG,
-                                "RegisterDeviceApi: ${JSONObject(response.errorBody()!!.string())}"
-                            )
-                        } catch (e: Exception) {
-                            Sentry.captureException(e)
-                            Log.d(
-                                TAG,
-                                "RegisterDeviceApi: Error in parsing server error response ${e.message}"
-                            )
-                        }
-                    }
-                }
-
-                override fun onFailure(call: Call<Void>, t: Throwable) {
-                    Log.d(TAG, "RegisterDeviceApi: Error in requesting API ${t.message}")
-                }
-            })
-        }
-    }
-
     override fun onOSSubscriptionChanged(stateChanges: OSSubscriptionStateChanges) {
         Log.d(TAG, "OSSubscriptionStateChanged, calling registerDevice")
-        registerDevice()
+        registerDevice(sharedPref)
     }
 
 }

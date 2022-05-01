@@ -1,4 +1,4 @@
-package com.sawolabs.androidsdk
+package com.sawolabs.androidsdk.util
 
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
