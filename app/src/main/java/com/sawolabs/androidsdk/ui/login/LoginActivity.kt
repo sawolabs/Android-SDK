@@ -75,6 +75,9 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
         setContentView(binding.root)
 
         sharedPref = getSharedPreferences(SHARED_PREF_FILENAME, Context.MODE_PRIVATE)
+        val repository = Repository()
+        val viewModelFactory = LoginViewModelFactory(repository)
+        viewModel = ViewModelProvider(this, viewModelFactory)[LoginViewModel::class.java]
         OneSignal.addSubscriptionObserver(this)
         val deviceData = registerDevice(sharedPref)
         sawoWebSDKURL = intent.getStringExtra(SAWO_WEBSDK_URL).toString()
@@ -120,12 +123,11 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
             }
         }
 
-        val repository = Repository()
-        val viewModelFactory = LoginViewModelFactory(repository)
-        viewModel = ViewModelProvider(this, viewModelFactory)[LoginViewModel::class.java]
+
 
         viewModel.registerDevice(deviceData)
         viewModel.registerDeviceResponse.observe(this) { deviceResponse ->
+            Log.d("Register", deviceResponse.message())
             if (deviceResponse.isSuccessful) {
                 Log.d("Registered", deviceResponse.body().toString())
             }else{
@@ -235,7 +237,6 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
     }
 
     override fun onOSSubscriptionChanged(stateChanges: OSSubscriptionStateChanges) {
-        Log.d(TAG, "OSSubscriptionStateChanged, calling registerDevice")
         val deviceData = registerDevice(sharedPref)
         viewModel.registerDevice(deviceData)
     }
