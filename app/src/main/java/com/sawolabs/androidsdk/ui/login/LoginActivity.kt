@@ -236,7 +236,8 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
 
     override fun onOSSubscriptionChanged(stateChanges: OSSubscriptionStateChanges) {
         Log.d(TAG, "OSSubscriptionStateChanged, calling registerDevice")
-        registerDevice(sharedPref)
+        val deviceData = registerDevice(sharedPref)
+        viewModel.registerDevice(deviceData)
     }
 
 }
