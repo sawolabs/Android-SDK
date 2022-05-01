@@ -10,7 +10,7 @@ import retrofit2.http.POST
 interface RegisterDeviceApi {
 
     @Headers("content-type: application/json")
-    @POST("register_device/")
+    @POST("/api/v1/register_device/")
     suspend fun registerDevice(@Body device: Device): Response<RegisterDeviceResponse>
 
 }
