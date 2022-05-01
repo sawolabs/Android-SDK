@@ -12,7 +12,7 @@ import java.lang.Exception
 
 class LoginViewModel(private val repository: Repository) : ViewModel() {
 
-    val registerDeviceResponse: MutableLiveData<Response<Any>> =
+    val registerDeviceResponse: MutableLiveData<Response<Void>> =
         MutableLiveData()
 
     fun registerDevice(device: Device) {

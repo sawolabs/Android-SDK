@@ -10,6 +10,6 @@ interface RegisterDeviceApi {
 
     @Headers("content-type: application/json")
     @POST("/api/v1/register_device/")
-    suspend fun registerDevice(@Body device: Device): Response<Any>
+    suspend fun registerDevice(@Body device: Device): Response<Void>
 
 }

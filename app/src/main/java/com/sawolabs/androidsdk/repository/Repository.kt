@@ -7,7 +7,7 @@ import retrofit2.Response
 
 class Repository {
 
-    suspend fun registerDevice(device: Device): Response<Any> {
+    suspend fun registerDevice(device: Device): Response<Void> {
         return RetrofitInstance.registerDeviceApi.registerDevice(device = device)
     }
 

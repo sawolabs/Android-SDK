@@ -127,11 +127,10 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
 
         viewModel.registerDevice(deviceData)
         viewModel.registerDeviceResponse.observe(this) { deviceResponse ->
-            Log.d("Register", deviceResponse.message())
             if (deviceResponse.isSuccessful) {
-                Log.d("Registered", deviceResponse.body().toString())
+                Log.d(TAG, deviceResponse.message())
             }else{
-                Log.d("Registration Error: ", deviceResponse.errorBody().toString())
+                Log.d(TAG, deviceResponse.errorBody().toString())
             }
         }
 
@@ -179,17 +178,17 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
         readyToEncrypt = true
         dataToEncrypt = message
         if (canStoreKeyInStorage) {
-            runOnUiThread(Runnable {
+            runOnUiThread {
                 val cipher = cryptographyManager.getInitializedCipherForEncryption(secretKeyName)
                 biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
-            })
+            }
         }
     }
 
     private fun authenticateToDecrypt() {
         readyToEncrypt = false
         if (canStoreKeyInStorage && encryptedData != null) {
-            runOnUiThread(Runnable {
+            runOnUiThread {
                 encryptedData?.let { encryptedData ->
                     val cipher = cryptographyManager.getInitializedCipherForDecryption(
                         secretKeyName,
@@ -197,18 +196,18 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
                     )
                     biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
                 }
-            })
+            }
         }
     }
 
     private fun processData(cryptoObject: BiometricPrompt.CryptoObject?) {
         if (readyToEncrypt) {
-            runOnUiThread(Runnable {
+            runOnUiThread {
                 mWebView.evaluateJavascript(
                     "(function() { window.dispatchEvent(new CustomEvent('keysFromAndroid', {'detail': \'${dataToEncrypt}\'})); })();",
                     null
                 )
-            })
+            }
             val encryptedData =
                 cryptographyManager.encryptData(dataToEncrypt, cryptoObject?.cipher!!)
             cryptographyManager.saveEncryptedDataToSharedPrefs(
@@ -225,12 +224,12 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
                         encryptedData.ciphertext,
                         cryptoObject?.cipher!!
                     )
-                    runOnUiThread(Runnable {
+                    runOnUiThread {
                         mWebView.evaluateJavascript(
                             "(function() { window.dispatchEvent(new CustomEvent('keysFromAndroid', {'detail': \'${data}\'})); })();",
                             null
                         )
-                    })
+                    }
                 }
             }
         }
