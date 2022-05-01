@@ -1,7 +1,6 @@
 package com.sawolabs.androidsdk.api
 
 import com.sawolabs.androidsdk.model.Device
-import com.sawolabs.androidsdk.model.RegisterDeviceResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.Headers
@@ -11,6 +10,6 @@ interface RegisterDeviceApi {
 
     @Headers("content-type: application/json")
     @POST("/api/v1/register_device/")
-    suspend fun registerDevice(@Body device: Device): Response<RegisterDeviceResponse>
+    suspend fun registerDevice(@Body device: Device): Response<Any>
 
 }

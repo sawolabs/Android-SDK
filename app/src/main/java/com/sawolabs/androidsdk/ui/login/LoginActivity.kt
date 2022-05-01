@@ -127,7 +127,7 @@ class LoginActivity : AppCompatActivity(), OSSubscriptionObserver {
         viewModel.registerDevice(deviceData)
         viewModel.registerDeviceResponse.observe(this) { deviceResponse ->
             if (deviceResponse.isSuccessful) {
-                Log.d("Registered", deviceResponse.message())
+                Log.d("Registered", deviceResponse.body().toString())
             }else{
                 Log.d("Registration Error: ", deviceResponse.errorBody().toString())
             }

@@ -3,7 +3,6 @@ package com.sawolabs.androidsdk.ui.notification.viewmodel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sawolabs.androidsdk.model.RegisterDeviceResponse
 import com.sawolabs.androidsdk.model.TrustedDevice
 import com.sawolabs.androidsdk.repository.Repository
 import io.sentry.Sentry
