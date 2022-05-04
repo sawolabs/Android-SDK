@@ -23,7 +23,7 @@
 3. Add this to your app level build.gradle dependencies block
 
    ```java
-	   implementation 'com.github.sawolabs:Android-SDK:0.2.1'
+	   implementation 'com.github.sawolabs:Android-SDK:0.3.0'
    ```
 
    Add this to your app level build.gradle defaultConfig block
@@ -109,8 +109,8 @@
    The body of this POST request would have two key-value pairs. The sample is shown below:
 	```
 	{
-	   "user_id" : "a0aca1a0-7460-4e8e-8e46-3baf2c92423d",
-	   "verification_token" : "ADdHrvkgi407qNfnAyrIVqokm3OWdKUCdj8y"
+	   "user_id" : "a0bcq1a0-7460-4e8e-8f46-3baf2c97423d",
+	   "verification_token" : "ADeHrvagi407qNfnAyrIpqokn3OWdKUCdj8y"
 	}
 	```
 	
